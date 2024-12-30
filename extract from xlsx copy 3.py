@@ -170,7 +170,7 @@ class ExcelToJsonConverter:
         wb.close()
 
         # Save JSON
-        output_file = os.path.join(self.output_folder, 'output.json')
+        output_file = os.path.join(self.output_folder, 'output2.json')
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(result, f, ensure_ascii=False, indent=2)
 
