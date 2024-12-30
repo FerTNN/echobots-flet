@@ -3,6 +3,7 @@ import json
 import os
 import re
 import requests
+from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 
 class ExcelToJsonConverter:
@@ -60,25 +61,63 @@ class ExcelToJsonConverter:
         
         return None
 
-    def _process_cell(self, value, row_index):
-        """Process cell content, download images if needed"""
+    def _convert_to_text(self, value):
+        """Convert any value to text format"""
         if pd.isna(value):
             return "Пустая ячейка"
         
-        value = str(value)
-        if 'drive.google.com' in value:
-            image_path = self._download_image(value, row_index)
+        # If it's already a string, just return it
+        if isinstance(value, str):
+            return value.strip()
+        
+        # Handle datetime objects
+        if isinstance(value, (pd.Timestamp, datetime)):
+            # Convert to Russian date format
+            return value.strftime("%d %B %Y").replace("January", "января")\
+                                            .replace("February", "февраля")\
+                                            .replace("March", "марта")\
+                                            .replace("April", "апреля")\
+                                            .replace("May", "мая")\
+                                            .replace("June", "июня")\
+                                            .replace("July", "июля")\
+                                            .replace("August", "августа")\
+                                            .replace("September", "сентября")\
+                                            .replace("October", "октября")\
+                                            .replace("November", "ноября")\
+                                            .replace("December", "декабря")
+        
+        # Handle numeric values
+        if isinstance(value, (int, float)):
+            if value.is_integer():
+                return str(int(value))
+            return str(value)
+        
+        # Handle any other type
+        return str(value).strip()
+
+    def _process_cell(self, value, row_index):
+        """Process cell content, download images if needed"""
+        # First convert to text
+        text_value = self._convert_to_text(value)
+        
+        # Check for Google Drive links
+        if isinstance(text_value, str) and 'drive.google.com' in text_value:
+            image_path = self._download_image(text_value, row_index)
             return {
-                'text': value,
+                'text': text_value,
                 'image_path': image_path
             }
         
-        return value if value not in ['?', '-'] else value
+        return text_value if text_value not in ['?', '-'] else text_value
 
     def convert(self):
         """Convert Excel file to JSON"""
-        # Read Excel file
-        df = pd.read_excel(self.excel_file)
+        # Read Excel file with all cells as text
+        df = pd.read_excel(
+            self.excel_file,
+            dtype=str,  # Read all columns as string
+            na_filter=True
+        )
         
         # Ensure all columns exist
         for col in self.columns:
@@ -101,7 +140,7 @@ class ExcelToJsonConverter:
                     merge_count += 1
 
             # Handle last merge group if exists
-            if merge_count > 0:
+            if merge_count > 0 and current_value is not None:
                 df.iloc[-merge_count:, df.columns.get_loc(col)] = current_value
 
         # Convert to JSON
