@@ -1,7 +1,7 @@
 import flet as ft
 import json
 import os
-import pyperclip
+# import pyperclip
 
 # Функция для загрузки данных из JSON-файла
 def load_data(file_path):
@@ -10,8 +10,8 @@ def load_data(file_path):
         return json.load(file)
 
 # Функция для копирования текста в буфер обмена
-def copy_to_clipboard(text):
-    pyperclip.copy(text)
+def copy_to_clipboard(text, page):
+    page.set_clipboard(text)
     print(f"Скопировано в буфер обмена: {text}")
 
 # Функция для создания карточки
