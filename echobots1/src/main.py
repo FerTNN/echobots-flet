@@ -85,7 +85,7 @@ def create_card(item, page):
             details.append(ft.Text(f"Примечания: {notes_text}", selectable=True))
             if notes_image and os.path.exists(notes_image):
                 print(f"Добавление изображения из примечаний: {notes_image}")
-                details.append(ft.Image(src=notes_image, width=300, height=300))
+                details.append(ft.Image(src=notes_image, width=500, height=500))
         else:
             details.append(ft.Text(f"Примечания: {notes}", selectable=True))
 
