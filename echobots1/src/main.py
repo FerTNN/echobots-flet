@@ -133,7 +133,7 @@ def main(page: ft.Page):
     page.scroll = "adaptive"
 
     # Загрузка данных
-    data = load_data(r"echobots1\storage\data\output\main.json")
+    data = load_data(r"_internal\assets\output\main.json")
 
     # Создание карточек
     cards = [create_card(item, page) for item in data]
