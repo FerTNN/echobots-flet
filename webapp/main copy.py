@@ -202,7 +202,7 @@ class BotCatalog:
                 # Отображаем текст, если ссылки нет
                 details.append(ft.Text(f"{key}: {value}", selectable=True))
 
-    # Обработка примечаний
+        # Обработка примечаний
         notes = raw_data.get('Примечания', None)
         if notes:
             details.append(ft.Text("Примечания:", weight=ft.FontWeight.BOLD))
@@ -210,28 +210,17 @@ class BotCatalog:
             if isinstance(notes, dict):  # Если примечания содержат текст и другие данные
                 text = notes.get('text', None)
                 link = notes.get('link', None)
-                image_path = notes.get('image_path', None)
-
                 # Отображение текста
                 if text:
                     details.append(ft.Text(text, selectable=True))
-
                 # Отображение изображения
-                if image_path and (image_path.startswith('http://') or image_path.startswith('https://')):
+                if link and (link.startswith('http://') or link.startswith('https://')):
                     details.append(
-                        ft.Image(src=image_path, width=300, height=200, fit=ft.ImageFit.CONTAIN)
-                    )
-
-                # Кнопка для ссылки
-                if link:
-                    details.append(
-                        ft.TextButton(
-                            text="Открыть ссылку в примечаниях",
-                            on_click=lambda e, v=link: self.page.launch_url(v)
-                        )
+                        ft.Image(src=link)
                     )
             else:  # Если примечания — это просто строка
                 details.append(ft.Text(notes, selectable=True))
+                details.append(ft.Text('Картинки нет', selectable=True, color=ft.Colors.RED_400))
         
         # Создаем и показываем диалог
         dialog = ft.AlertDialog(
