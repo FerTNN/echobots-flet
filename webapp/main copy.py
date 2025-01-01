@@ -128,7 +128,7 @@ class BotCatalog:
                                 width=300,
                                 height=200,
                             ) if bot.image_url else ft.Icon(
-                                name=ft.Icons.ANDROID,
+                                name=ft.Icons.PERSON,
                                 size=64,
                                 color=ft.Colors.BLUE_400,
                             ),
@@ -161,6 +161,7 @@ class BotCatalog:
     def show_bot_details(self, bot: Bot):
         details = []
         raw_data = bot.raw_data
+        bot.image_url
 
         # Добавляем поля с возможностью копирования
         for key in ['Нынешний юз', 'Старый юз', 'Айди']:
@@ -177,10 +178,61 @@ class BotCatalog:
                 )
 
         # Добавляем остальные поля
-        for key in ['Первый запуск', 'Второй запуск', 'Дата смерти', 'Владелец', 'Статус', 'Каналы Ботов', 'Сурсы', 'Айди']:
+        for key in ['Первый запуск', 'Второй запуск', 'Дата смерти', 'Владелец', 'Статус', 'Айди']:
             value = str(raw_data.get(key, '-'))
-            details.append(ft.Text(f"{key}: {value}", selectable=True))
+            details.append(
+                ft.Text(
+                    f"{key}: {value}",
+                    selectable=True
+                    )
+                )
 
+    # Обрабатываем специальные поля 'Каналы Ботов' и 'Сурсы'
+        for key in ['Каналы Ботов', 'Сурсы']:
+            value = str(raw_data.get(key, '-'))
+            if "http://" in value or "https://" in value:
+                # Создаем кнопку для ссылки
+                details.append(
+                    ft.TextButton(
+                        text=f"{key}",
+                        on_click=lambda e, v=value: self.open_link(v)
+                    )
+                )
+            else:
+                # Отображаем текст, если ссылки нет
+                details.append(ft.Text(f"{key}: {value}", selectable=True))
+
+    # Обработка примечаний
+        notes = raw_data.get('Примечания', None)
+        if notes:
+            details.append(ft.Text("Примечания:", weight=ft.FontWeight.BOLD))
+
+            if isinstance(notes, dict):  # Если примечания содержат текст и другие данные
+                text = notes.get('text', None)
+                link = notes.get('link', None)
+                image_path = notes.get('image_path', None)
+
+                # Отображение текста
+                if text:
+                    details.append(ft.Text(text, selectable=True))
+
+                # Отображение изображения
+                if image_path and (image_path.startswith('http://') or image_path.startswith('https://')):
+                    details.append(
+                        ft.Image(src=image_path, width=300, height=200, fit=ft.ImageFit.CONTAIN)
+                    )
+
+                # Кнопка для ссылки
+                if link:
+                    details.append(
+                        ft.TextButton(
+                            text="Открыть ссылку в примечаниях",
+                            on_click=lambda e, v=link: self.page.launch_url(v)
+                        )
+                    )
+            else:  # Если примечания — это просто строка
+                details.append(ft.Text(notes, selectable=True))
+        
         # Создаем и показываем диалог
         dialog = ft.AlertDialog(
             title=ft.Text(bot.name),
@@ -204,7 +256,13 @@ class BotCatalog:
     def close_dialog(self, dialog):
         dialog.open = False
         self.page.update()
-
+        
+    def open_link(self, url):
+        os.system(f"start {url}")  # Открывает ссылку в браузере
+        snack = ft.SnackBar(content=ft.Text("Ссылка открыта в браузере"))
+        self.page.overlay.append(snack)
+        snack.open = True
+        self.page.update()
 
 def main(page: ft.Page):
     BotCatalog(page)
