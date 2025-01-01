@@ -39,10 +39,11 @@ class BotCatalog:
     def __init__(self, page: ft.Page):
         self.page = page
         self.page.title = "Каталог ботов"
-        self.page.theme_mode = ft.ThemeMode.LIGHT
+        self.page.theme_mode = ft.ThemeMode.SYSTEM
         self.page.padding = 20
         self.bots = []
         self.filtered_bots = []
+        # Тема
         def change_theme(e):
             page.theme_mode = 'light' if page.theme_mode == 'dark' else 'dark'
             page.update()
@@ -55,13 +56,14 @@ class BotCatalog:
             selected=False,
             tooltip='Сменить тему')
         
-        # Поле поиска с исправленной иконкой
-        self.search_field = ft.Row([
-            ft.TextField(
+        # Поле поиска        
+        search = ft.TextField(
             label="Поиск ботов",
             prefix_icon=ft.Icons.SEARCH,
             on_change=self.filter_bots,
-            expand=False), theme])
+            expand=False)
+        self.search_field = search
+        self.test = ft.Row([search, theme])
         
         # Сетка для отображения ботов
         self.grid_view = ft.GridView(
@@ -75,7 +77,7 @@ class BotCatalog:
         
         # Компоновка элементов
         self.page.add(
-            self.search_field,
+            self.test,
             self.grid_view
         )
         
@@ -201,6 +203,33 @@ class BotCatalog:
             else:
                 # Отображаем текст, если ссылки нет
                 details.append(ft.Text(f"{key}: {value}", selectable=True))
+        
+        # Кд
+        cooldown = raw_data.get('Кд', None)
+        if cooldown:
+            details.append(ft.Text("Кд:", weight=ft.FontWeight.BOLD))
+
+            if isinstance(cooldown, dict):  # Если Кд содержит текст и другие данные
+                text = cooldown.get('text', None)
+                link = cooldown.get('link', None)
+                # Отображение текста
+                if text:
+                    details.append(ft.Text(text, selectable=True))
+                # Отображение изображения через link
+                if link:
+                    details.append(
+                        ft.Container(
+                            content=ft.Image(
+                                src=link,
+                                fit=ft.ImageFit.CONTAIN,
+                                width=400,
+                                height=500,
+                            ),
+                            alignment=ft.alignment.center,
+                        )
+                    )
+            else:  # Если Кд — это просто строка
+                details.append(ft.Text(cooldown, selectable=True))                
 
         # Обработка примечаний
         notes = raw_data.get('Примечания', None)
