@@ -16,9 +16,14 @@ class Bot:
     def from_json(cls, data: Dict[str, Any]) -> 'Bot':
         bot_info = data.get('Бот', {})
         if isinstance(bot_info, dict):
+            # Здесь можно добавить логику для замены локальных путей на веб-ссылки
+            image_url = bot_info.get('link')
+            if image_url and not image_url.startswith(('http://', 'https://')):
+                image_url = None  # Игнорируем локальные пути
+                
             return cls(
                 name=bot_info.get('text', 'Unknown'),
-                image_url=bot_info.get('link'),
+                image_url=image_url,
                 description=bot_info.get('text'),
                 status=data.get('Статус'),
                 raw_data=data
@@ -34,18 +39,31 @@ class BotCatalog:
     def __init__(self, page: ft.Page):
         self.page = page
         self.page.title = "Каталог ботов"
-        self.page.theme_mode = ft.ThemeMode.LIGHT
+        self.page.theme_mode = ft.ThemeMode.SYSTEM
         self.page.padding = 20
         self.bots = []
         self.filtered_bots = []
+        # Тема
+        def change_theme(e):
+            page.theme_mode = 'light' if page.theme_mode == 'dark' else 'dark'
+            page.update()
+            e.control.selected = not e.control.selected
+            e.control.update()
+        theme = ft.IconButton(
+            icon=ft.Icons.SUNNY,
+            selected_icon=ft.Icons.WB_SUNNY_OUTLINED,
+            on_click=change_theme,
+            selected=False,
+            tooltip='Сменить тему')
         
-        # Поле поиска
-        self.search_field = ft.TextField(
+        # Поле поиска        
+        search = ft.TextField(
             label="Поиск ботов",
-            prefix_icon=ft.icons.SEARCH,
+            prefix_icon=ft.Icons.SEARCH,
             on_change=self.filter_bots,
-            expand=True
-        )
+            expand=False)
+        self.search_field = search
+        self.test = ft.Row([search, theme])
         
         # Сетка для отображения ботов
         self.grid_view = ft.GridView(
@@ -59,7 +77,7 @@ class BotCatalog:
         
         # Компоновка элементов
         self.page.add(
-            self.search_field,
+            self.test,
             self.grid_view
         )
         
@@ -78,16 +96,18 @@ class BotCatalog:
             self.filtered_bots = self.bots.copy()
             self.update_grid()
             
-            # Сообщение об успешной загрузке
-            self.page.show_snack_bar(
-                ft.SnackBar(content=ft.Text(f"Успешно загружено {len(self.bots)} ботов"))
-            )
+            # Обновленное уведомление
+            snack = ft.SnackBar(content=ft.Text(f"Успешно загружено {len(self.bots)} ботов"))
+            self.page.overlay.append(snack)
+            snack.open = True
+            self.page.update()
+            
         except Exception as ex:
             print(f"Ошибка при загрузке файла: {ex}")
-            self.page.show_snack_bar(
-                ft.SnackBar(content=ft.Text(f"Ошибка при загрузке файла: {str(ex)}"))
-            )
-        self.page.update()
+            snack = ft.SnackBar(content=ft.Text(f"Ошибка при загрузке файла: {str(ex)}"))
+            self.page.overlay.append(snack)
+            snack.open = True
+            self.page.update()
 
     def filter_bots(self, e):
         query = self.search_field.value.lower()
@@ -97,7 +117,6 @@ class BotCatalog:
                (bot.description and query in bot.description.lower())
         ]
         self.update_grid()
-        self.page.update()
 
     def create_bot_card(self, bot: Bot) -> ft.Card:
         return ft.Card(
@@ -106,14 +125,14 @@ class BotCatalog:
                     [
                         ft.Container(
                             content=ft.Image(
-                                src=bot.image_url if bot.image_url else "/icons/android.png",
-                                fit=ft.ImageFit.COVER,
-                                width=400,
+                                src=bot.image_url if bot.image_url else None,
+                                fit=ft.ImageFit.CONTAIN,
+                                width=300,
                                 height=200,
                             ) if bot.image_url else ft.Icon(
-                                name=ft.icons.ANDROID,
+                                name=ft.Icons.PERSON,
                                 size=64,
-                                color=ft.colors.BLUE_400,
+                                color=ft.Colors.BLUE_400,
                             ),
                             alignment=ft.alignment.center,
                             height=200,
@@ -141,15 +160,10 @@ class BotCatalog:
         ]
         self.page.update()
 
-    def copy_to_clipboard(self, text):
-        self.page.set_clipboard(text)
-        self.page.show_snack_bar(
-            ft.SnackBar(content=ft.Text("Скопировано в буфер обмена"))
-        )
-
     def show_bot_details(self, bot: Bot):
         details = []
         raw_data = bot.raw_data
+        bot.image_url
 
         # Добавляем поля с возможностью копирования
         for key in ['Нынешний юз', 'Старый юз', 'Айди']:
@@ -159,17 +173,85 @@ class BotCatalog:
                     ft.Row([
                         ft.Text(f"{key}: {value}", selectable=True),
                         ft.IconButton(
-                            ft.icons.COPY,
+                            ft.Icons.COPY,
                             on_click=lambda e, v=value: self.copy_to_clipboard(v)
                         )
                     ])
                 )
 
         # Добавляем остальные поля
-        for key in ['Первый запуск', 'Второй запуск', 'Дата смерти', 'Владелец', 'Статус']:
+        for key in ['Первый запуск', 'Второй запуск', 'Дата смерти', 'Владелец', 'Статус', 'Айди']:
             value = str(raw_data.get(key, '-'))
-            details.append(ft.Text(f"{key}: {value}", selectable=True))
+            details.append(
+                ft.Text(
+                    f"{key}: {value}",
+                    selectable=True
+                    )
+                )
 
+    # Обрабатываем специальные поля 'Каналы Ботов' и 'Сурсы'
+        for key in ['Каналы Ботов', 'Сурсы']:
+            value = str(raw_data.get(key, '-'))
+            if "http://" in value or "https://" in value:
+                # Создаем кнопку для ссылки
+                details.append(
+                    ft.TextButton(
+                        text=f"{key}",
+                        on_click=lambda e, v=value: self.open_link(v)
+                    )
+                )
+            else:
+                # Отображаем текст, если ссылки нет
+                details.append(ft.Text(f"{key}: {value}", selectable=True))
+        
+        # Кд
+        cooldown = raw_data.get('Кд', None)
+        if cooldown:
+            details.append(ft.Text("Кд:", weight=ft.FontWeight.BOLD))
+
+            if isinstance(cooldown, dict):  # Если Кд содержит текст и другие данные
+                text = cooldown.get('text', None)
+                link = cooldown.get('link', None)
+                # Отображение текста
+                if text:
+                    details.append(ft.Text(text, selectable=True))
+                # Отображение изображения через link
+                if link:
+                    details.append(
+                        ft.Container(
+                            content=ft.Image(
+                                src=link,
+                                fit=ft.ImageFit.CONTAIN,
+                                width=400,
+                                height=500,
+                            ),
+                            alignment=ft.alignment.center,
+                        )
+                    )
+            else:  # Если Кд — это просто строка
+                details.append(ft.Text(cooldown, selectable=True))                
+
+        # Обработка примечаний
+        notes = raw_data.get('Примечания', None)
+        if notes:
+            details.append(ft.Text("Примечания:", weight=ft.FontWeight.BOLD))
+
+            if isinstance(notes, dict):  # Если примечания содержат текст и другие данные
+                text = notes.get('text', None)
+                link = notes.get('link', None)
+                # Отображение текста
+                if text:
+                    details.append(ft.Text(text, selectable=True))
+                # Отображение изображения
+                if link and (link.startswith('http://') or link.startswith('https://')):
+                    details.append(
+                        ft.Image(src=link)
+                    )
+            else:  # Если примечания — это просто строка
+                details.append(ft.Text(notes, selectable=True))
+                details.append(ft.Text('Картинки нет', selectable=True, color=ft.Colors.RED_400))
+        
+        # Создаем и показываем диалог
         dialog = ft.AlertDialog(
             title=ft.Text(bot.name),
             content=ft.Column(details, scroll=ft.ScrollMode.AUTO),
@@ -177,13 +259,27 @@ class BotCatalog:
                 ft.TextButton("Закрыть", on_click=lambda e: self.close_dialog(dialog))
             ],
         )
-
-        self.page.dialog = dialog
+        
+        self.page.overlay.append(dialog)
         dialog.open = True
+        self.page.update()
+
+    def copy_to_clipboard(self, text):
+        self.page.set_clipboard(text)
+        snack = ft.SnackBar(content=ft.Text("Скопировано в буфер обмена"))
+        self.page.overlay.append(snack)
+        snack.open = True
         self.page.update()
 
     def close_dialog(self, dialog):
         dialog.open = False
+        self.page.update()
+        
+    def open_link(self, url):
+        os.system(f"start {url}")  # Открывает ссылку в браузере
+        snack = ft.SnackBar(content=ft.Text("Ссылка открыта в браузере"))
+        self.page.overlay.append(snack)
+        snack.open = True
         self.page.update()
 
 def main(page: ft.Page):
