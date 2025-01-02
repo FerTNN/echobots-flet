@@ -37,7 +37,6 @@ class Bot:
 
 class BotCatalog:
     def __init__(self, page: ft.Page):
-        
         self.page = page
         self.page.title = "Каталог ботов"
         self.page.theme_mode = ft.ThemeMode.SYSTEM
@@ -45,29 +44,23 @@ class BotCatalog:
         self.bots = []
         self.filtered_bots = []
         self.selected_status = None
-        
-        # Тема
-        def change_theme(e):
-            page.theme_mode = 'light' if page.theme_mode == 'dark' else 'dark'
-            page.update()
-            e.control.selected = not e.control.selected
-            e.control.update()
-        theme = ft.IconButton(
-            icon=ft.Icons.SUNNY,
-            selected_icon=ft.Icons.WB_SUNNY_OUTLINED,
-            on_click=change_theme,
-            selected=False,
-            tooltip='Сменить тему')
-        
+
         # Поле поиска        
         search = ft.TextField(
             label="Поиск ботов",
             prefix_icon=ft.Icons.SEARCH,
             on_change=self.filter_bots,
-            expand=False)
-        self.search_field = search
+            expand=False
+        )
+        theme = ft.IconButton(
+            icon=ft.Icons.SUNNY,
+            selected_icon=ft.Icons.WB_SUNNY_OUTLINED,
+            on_click=lambda e: self.change_theme(e),
+            selected=False,
+            tooltip='Сменить тему'
+        )
         self.search_theme = ft.Row([search, theme])
-        
+
         # Container для фильтров статуса
         self.status_filters = ft.Container(
             content=ft.Row(
@@ -76,9 +69,10 @@ class BotCatalog:
                 wrap=True,
                 scroll=ft.ScrollMode.AUTO
             ),
+            height=30,  # Установите фиксированную высоту
             margin=ft.margin.only(top=10, bottom=10)
         )
-        
+
         # Сетка для отображения ботов
         self.grid_view = ft.GridView(
             expand=True,
@@ -86,16 +80,21 @@ class BotCatalog:
             max_extent=300,
             spacing=20,
             run_spacing=20,
-            padding=20
+            clip_behavior=ft.ClipBehavior.HARD_EDGE
         )
-        
-        # Компоновка элементов
+
+        # Компоновка элементов через Column
         self.page.add(
-            self.search_theme,
-            self.status_filters,
-            self.grid_view
+            ft.Column(
+                [
+                    self.search_theme,
+                    self.status_filters,
+                    self.grid_view
+                ],
+                expand=True
+            )
         )
-        
+
         # Загрузка данных
         self.load_data()
 
@@ -223,10 +222,11 @@ class BotCatalog:
                     [
                         ft.Container(
                             content=ft.Image(
-                                src=bot.image_url if bot.image_url else None,
+                                src=bot.image_url,
                                 fit=ft.ImageFit.CONTAIN,
-                                width=300,
-                                height=200,
+                                width=200,
+                                height=300,
+                                filter_quality=ft.FilterQuality.HIGH
                             ) if bot.image_url else ft.Icon(
                                 name=ft.Icons.PERSON,
                                 size=64,
