@@ -44,6 +44,7 @@ class BotCatalog:
         self.page.padding = 20
         self.bots = []
         self.filtered_bots = []
+        self.selected_status = None
         
         # Тема
         def change_theme(e):
@@ -67,6 +68,17 @@ class BotCatalog:
         self.search_field = search
         self.search_theme = ft.Row([search, theme])
         
+        # Container для фильтров статуса
+        self.status_filters = ft.Container(
+            content=ft.Row(
+                controls=[],
+                spacing=10,
+                wrap=True,
+                scroll=ft.ScrollMode.AUTO
+            ),
+            margin=ft.margin.only(top=10, bottom=10)
+        )
+        
         # Сетка для отображения ботов
         self.grid_view = ft.GridView(
             expand=True,
@@ -80,11 +92,89 @@ class BotCatalog:
         # Компоновка элементов
         self.page.add(
             self.search_theme,
+            self.status_filters,
             self.grid_view
         )
         
         # Загрузка данных
         self.load_data()
+
+    # Создание фильра по статусам
+    def create_status_filters(self, statuses: set[str]):
+        status_row = self.status_filters.content
+        status_row.controls.clear()
+        
+        # Кнопка "Все"
+        all_button = ft.ElevatedButton(
+            text="Все боты",
+            on_click=lambda e: self.update_status_filter(None, e.control),
+            style=ft.ButtonStyle(
+                shape=ft.RoundedRectangleBorder(radius=8),
+                bgcolor=ft.Colors.BLUE,
+                color=ft.Colors.WHITE,
+            ),
+        )
+        status_row.controls.append(all_button)
+        
+        # Кнопки для каждого статуса
+        for status in sorted(statuses):
+            if status and status != "Пустая ячейка":
+                button = ft.ElevatedButton(
+                    text=status,
+                    on_click=lambda e, s=status: self.update_status_filter(s, e.control),
+                    style=ft.ButtonStyle(
+                        shape=ft.RoundedRectangleBorder(radius=8),
+                        bgcolor=ft.Colors.BLUE_100,
+                        color=ft.Colors.BLACK,
+                    ),
+                )
+                status_row.controls.append(button)
+        
+        self.page.update()
+
+    def update_status_filter(self, status: Optional[str], clicked_button: ft.ElevatedButton):
+        self.selected_status = status
+        
+        # Обновляем внешний вид кнопок
+        for button in self.status_filters.content.controls:
+            if button == clicked_button:
+                button.style.bgcolor = ft.Colors.BLUE
+                button.style.color = ft.Colors.WHITE
+            else:
+                button.style.bgcolor = ft.Colors.BLUE_100
+                button.style.color = ft.Colors.BLACK
+            button.update()
+        
+        self.apply_filters()
+
+    def apply_filters(self):
+        search_query = self.search_field.value.lower() if self.search_field.value else ""
+        
+        # Применяем оба фильтра
+        self.filtered_bots = [
+            bot for bot in self.bots
+            if (not search_query or 
+                search_query in bot.name.lower() or 
+                (bot.description and search_query in bot.description.lower())) and
+            (not self.selected_status or bot.status == self.selected_status)
+        ]
+        
+        self.update_grid()
+        
+        # Показываем количество найденных ботов
+        total = len(self.filtered_bots)
+        snack = ft.SnackBar(
+            content=ft.Text(f"Найдено ботов: {total}"),
+            show_close_icon=True,
+            duration=300
+        )
+        self.page.overlay.append(snack)
+        snack.open = True
+        self.page.update()
+
+    def filter_bots(self, e):
+        self.apply_filters()
+
 
     def load_data(self):
         try:
@@ -97,8 +187,13 @@ class BotCatalog:
             self.bots = [Bot.from_json(item) for item in data]
             self.filtered_bots = self.bots.copy()
             self.update_grid()
+            
+            # Получаем уникальные статусы
+            statuses = {bot.status for bot in self.bots if bot.status and bot.status != "Пустая ячейка"}
+            self.create_status_filters(statuses)
+            
             # Уведомление о загрузке ботов
-            snack = ft.SnackBar(content=ft.Text(f"Успешно загружено {len(self.bots)} ботов"), show_close_icon=True)
+            snack = ft.SnackBar(content=ft.Text(f"Успешно загружено {len(self.bots)} ботов"), show_close_icon=True, duration=1000)
             self.page.overlay.append(snack)
             snack.open = True
             self.page.update()
@@ -194,20 +289,35 @@ class BotCatalog:
                     )
                 )
 
-    # Обработка каналов и сурсов
+        # Обработка каналов и сурсов
         for key in ['Каналы Ботов', 'Сурсы']:
-            value = str(raw_data.get(key, '-'))
-            if "http://" in value or "https://" in value:
-                # Кнопка для ссылки
-                details.append(
-                    ft.TextButton(
-                        text=f"{key}",
-                        on_click=lambda e, v=value: self.open_link(v)
+            value = raw_data.get(key, '-')
+            
+            if isinstance(value, dict):
+                # Если значение - словарь с текстом и ссылкой
+                link = value.get('link')
+                if link and (link.startswith('http://') or link.startswith('https://')):
+                    details.append(
+                        ft.TextButton(
+                            text=key,
+                            url=link,
+                            on_click=lambda e, url=link: self.page.launch_url(url)
+                        )
                     )
-                )
-            else:
-                # Отображаем текст, если ссылки нет
-                details.append(ft.Text(f"{key}: {value}", selectable=True))
+                else:
+                    details.append(ft.Text(f"{key}: {value.get('text', '-')}", selectable=True))
+            elif isinstance(value, str):
+                # Если значение - строка
+                if value.startswith(('http://', 'https://')):
+                    details.append(
+                        ft.TextButton(
+                            text=key,
+                            url=value,
+                            on_click=lambda e, url=value: self.page.launch_url(url)
+                        )
+                    )
+                else:
+                    details.append(ft.Text(f"{key}: {value}", selectable=True))
         
         # Кд
         cooldown = raw_data.get('Кд', None)
@@ -272,7 +382,7 @@ class BotCatalog:
     # Копирование
     def copy_to_clipboard(self, text):
         self.page.set_clipboard(text)
-        snack = ft.SnackBar(content=ft.Text("Скопировано в буфер обмена"), show_close_icon=True)
+        snack = ft.SnackBar(content=ft.Text("Скопировано в буфер обмена"), show_close_icon=True, duration=300)
         self.page.overlay.append(snack)
         snack.open = True
         self.page.update()
@@ -282,13 +392,6 @@ class BotCatalog:
         dialog.open = False
         self.page.update()
         
-    # Открытие ссылки
-    def open_link(self, url):
-        os.system(f"start {url}")  
-        snack = ft.SnackBar(content=ft.Text("Открытие ссылки"))
-        self.page.overlay.append(snack)
-        snack.open = True
-        self.page.update()
 
 def main(page: ft.Page):
     BotCatalog(page)
