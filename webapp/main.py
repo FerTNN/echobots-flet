@@ -16,10 +16,10 @@ class Bot:
     def from_json(cls, data: Dict[str, Any]) -> 'Bot':
         bot_info = data.get('Бот', {})
         if isinstance(bot_info, dict):
-            # Здесь можно добавить логику для замены локальных путей на веб-ссылки
+            # На всякий случай проверка link
             image_url = bot_info.get('link')
             if image_url and not image_url.startswith(('http://', 'https://')):
-                image_url = None  # Игнорируем локальные пути
+                image_url = None 
                 
             return cls(
                 name=bot_info.get('text', 'Unknown'),
@@ -37,12 +37,14 @@ class Bot:
 
 class BotCatalog:
     def __init__(self, page: ft.Page):
+        
         self.page = page
         self.page.title = "Каталог ботов"
         self.page.theme_mode = ft.ThemeMode.SYSTEM
         self.page.padding = 20
         self.bots = []
         self.filtered_bots = []
+        
         # Тема
         def change_theme(e):
             page.theme_mode = 'light' if page.theme_mode == 'dark' else 'dark'
@@ -63,7 +65,7 @@ class BotCatalog:
             on_change=self.filter_bots,
             expand=False)
         self.search_field = search
-        self.test = ft.Row([search, theme])
+        self.search_theme = ft.Row([search, theme])
         
         # Сетка для отображения ботов
         self.grid_view = ft.GridView(
@@ -77,11 +79,11 @@ class BotCatalog:
         
         # Компоновка элементов
         self.page.add(
-            self.test,
+            self.search_theme,
             self.grid_view
         )
         
-        # Загружаем данные при инициализации
+        # Загрузка данных
         self.load_data()
 
     def load_data(self):
@@ -95,20 +97,20 @@ class BotCatalog:
             self.bots = [Bot.from_json(item) for item in data]
             self.filtered_bots = self.bots.copy()
             self.update_grid()
-            
-            # Обновленное уведомление
-            snack = ft.SnackBar(content=ft.Text(f"Успешно загружено {len(self.bots)} ботов"))
+            # Уведомление о загрузке ботов
+            snack = ft.SnackBar(content=ft.Text(f"Успешно загружено {len(self.bots)} ботов"), show_close_icon=True)
             self.page.overlay.append(snack)
             snack.open = True
             self.page.update()
-            
+        # Обработка ошибки
         except Exception as ex:
             print(f"Ошибка при загрузке файла: {ex}")
-            snack = ft.SnackBar(content=ft.Text(f"Ошибка при загрузке файла: {str(ex)}"))
+            snack = ft.SnackBar(content=ft.Text(f"Ошибка при загрузке файла: {str(ex)}"), show_close_icon=True)
             self.page.overlay.append(snack)
             snack.open = True
             self.page.update()
 
+    # Фильтр через поиск
     def filter_bots(self, e):
         query = self.search_field.value.lower()
         self.filtered_bots = [
@@ -118,6 +120,7 @@ class BotCatalog:
         ]
         self.update_grid()
 
+    # Создание карточки бота
     def create_bot_card(self, bot: Bot) -> ft.Card:
         return ft.Card(
             content=ft.Container(
@@ -153,6 +156,7 @@ class BotCatalog:
             ),
         )
 
+    # Обновление сетки карточек
     def update_grid(self):
         self.grid_view.controls = [
             self.create_bot_card(bot)
@@ -160,6 +164,7 @@ class BotCatalog:
         ]
         self.page.update()
 
+    # Отрытие карточки
     def show_bot_details(self, bot: Bot):
         details = []
         raw_data = bot.raw_data
@@ -179,7 +184,7 @@ class BotCatalog:
                     ])
                 )
 
-        # Добавляем остальные поля
+        # Остальные поля
         for key in ['Первый запуск', 'Второй запуск', 'Дата смерти', 'Владелец', 'Статус', 'Айди']:
             value = str(raw_data.get(key, '-'))
             details.append(
@@ -189,11 +194,11 @@ class BotCatalog:
                     )
                 )
 
-    # Обрабатываем специальные поля 'Каналы Ботов' и 'Сурсы'
+    # Обработка каналов и сурсов
         for key in ['Каналы Ботов', 'Сурсы']:
             value = str(raw_data.get(key, '-'))
             if "http://" in value or "https://" in value:
-                # Создаем кнопку для ссылки
+                # Кнопка для ссылки
                 details.append(
                     ft.TextButton(
                         text=f"{key}",
@@ -215,7 +220,7 @@ class BotCatalog:
                 # Отображение текста
                 if text:
                     details.append(ft.Text(text, selectable=True))
-                # Отображение изображения через link
+                # Отображение изображения
                 if link:
                     details.append(
                         ft.Container(
@@ -251,7 +256,7 @@ class BotCatalog:
                 details.append(ft.Text(notes, selectable=True))
                 details.append(ft.Text('Картинки нет', selectable=True, color=ft.Colors.RED_400))
         
-        # Создаем и показываем диалог
+        # ALertDialog для отображения
         dialog = ft.AlertDialog(
             title=ft.Text(bot.name),
             content=ft.Column(details, scroll=ft.ScrollMode.AUTO),
@@ -264,20 +269,23 @@ class BotCatalog:
         dialog.open = True
         self.page.update()
 
+    # Копирование
     def copy_to_clipboard(self, text):
         self.page.set_clipboard(text)
-        snack = ft.SnackBar(content=ft.Text("Скопировано в буфер обмена"))
+        snack = ft.SnackBar(content=ft.Text("Скопировано в буфер обмена"), show_close_icon=True)
         self.page.overlay.append(snack)
         snack.open = True
         self.page.update()
 
+    # Закрыть AlertDialog
     def close_dialog(self, dialog):
         dialog.open = False
         self.page.update()
         
+    # Открытие ссылки
     def open_link(self, url):
-        os.system(f"start {url}")  # Открывает ссылку в браузере
-        snack = ft.SnackBar(content=ft.Text("Ссылка открыта в браузере"))
+        os.system(f"start {url}")  
+        snack = ft.SnackBar(content=ft.Text("Открытие ссылки"))
         self.page.overlay.append(snack)
         snack.open = True
         self.page.update()
