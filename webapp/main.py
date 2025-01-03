@@ -45,20 +45,26 @@ class BotCatalog:
         self.filtered_bots = []
         self.selected_status = None
 
+        # Тема
+        def change_theme(e):
+            page.theme_mode = 'light' if page.theme_mode == 'dark' else 'dark'
+            page.update()
+            e.control.selected = not e.control.selected
+            e.control.update()
+        theme = ft.IconButton(
+            icon=ft.Icons.SUNNY,
+            selected_icon=ft.Icons.WB_SUNNY_OUTLINED,
+            on_click=change_theme,
+            selected=False,
+            tooltip='Сменить тему')
+        
         # Поле поиска        
         search = ft.TextField(
             label="Поиск ботов",
             prefix_icon=ft.Icons.SEARCH,
             on_change=self.filter_bots,
-            expand=False
-        )
-        theme = ft.IconButton(
-            icon=ft.Icons.SUNNY,
-            selected_icon=ft.Icons.WB_SUNNY_OUTLINED,
-            on_click=lambda e: self.change_theme(e),
-            selected=False,
-            tooltip='Сменить тему'
-        )
+            expand=False)
+        self.search_field = search
         self.search_theme = ft.Row([search, theme])
 
         # Container для фильтров статуса
@@ -131,6 +137,7 @@ class BotCatalog:
         
         self.page.update()
 
+    # Переключение кнопок статуса
     def update_status_filter(self, status: Optional[str], clicked_button: ft.ElevatedButton):
         self.selected_status = status
         
@@ -146,6 +153,7 @@ class BotCatalog:
         
         self.apply_filters()
 
+    
     def apply_filters(self):
         search_query = self.search_field.value.lower() if self.search_field.value else ""
         
@@ -157,7 +165,6 @@ class BotCatalog:
                 (bot.description and search_query in bot.description.lower())) and
             (not self.selected_status or bot.status == self.selected_status)
         ]
-        
         self.update_grid()
         
         # Показываем количество найденных ботов
@@ -165,8 +172,7 @@ class BotCatalog:
         snack = ft.SnackBar(
             content=ft.Text(f"Найдено ботов: {total}"),
             show_close_icon=True,
-            duration=300
-        )
+            duration=300)
         self.page.overlay.append(snack)
         snack.open = True
         self.page.update()
@@ -174,7 +180,7 @@ class BotCatalog:
     def filter_bots(self, e):
         self.apply_filters()
 
-
+    # Загрузка данных
     def load_data(self):
         try:
             file_path = os.path.join(os.path.dirname(__file__), 'main.json')
@@ -192,11 +198,11 @@ class BotCatalog:
             self.create_status_filters(statuses)
             
             # Уведомление о загрузке ботов
-            snack = ft.SnackBar(content=ft.Text(f"Успешно загружено {len(self.bots)} ботов"), show_close_icon=True, duration=1000)
+            snack = ft.SnackBar(content=ft.Text(f"Успешно загружено {len(self.bots)} ботов"), show_close_icon=True, duration=200)
             self.page.overlay.append(snack)
             snack.open = True
             self.page.update()
-        # Обработка ошибки
+            
         except Exception as ex:
             print(f"Ошибка при загрузке файла: {ex}")
             snack = ft.SnackBar(content=ft.Text(f"Ошибка при загрузке файла: {str(ex)}"), show_close_icon=True)
@@ -245,7 +251,7 @@ class BotCatalog:
                             padding=10,
                         ),
                     ],
-                    spacing=0,
+                    spacing=5,
                 ),
                 on_click=lambda e: self.show_bot_details(bot),
             ),
@@ -337,10 +343,11 @@ class BotCatalog:
                             content=ft.Image(
                                 src=link,
                                 fit=ft.ImageFit.CONTAIN,
-                                width=400,
-                                height=500,
+                                filter_quality=ft.FilterQuality.HIGH,
+                                width=400,   # Можно убрать - последствия ниже
+                                height=500,  # https://flet.dev/docs/controls/image/#height
                             ),
-                            alignment=ft.alignment.center,
+                            alignment=ft.alignment.center, 
                         )
                     )
             else:  # Если Кд — это просто строка
@@ -374,7 +381,6 @@ class BotCatalog:
                 ft.TextButton("Закрыть", on_click=lambda e: self.close_dialog(dialog))
             ],
         )
-        
         self.page.overlay.append(dialog)
         dialog.open = True
         self.page.update()
