@@ -47,6 +47,7 @@ class BotCatalog:
 
         # Тема
         def change_theme(e):
+            """Смена темы"""
             page.theme_mode = 'light' if page.theme_mode == 'dark' else 'dark'
             page.update()
             e.control.selected = not e.control.selected
@@ -64,7 +65,7 @@ class BotCatalog:
             prefix_icon=ft.Icons.SEARCH,
             on_change=self.filter_bots,
             expand=False)
-        self.search_field = search
+        self.search_field = search # Это не обязятельно, но мне так удобнее
         self.search_theme = ft.Row([search, theme])
 
         # Container для фильтров статуса
@@ -106,6 +107,7 @@ class BotCatalog:
 
     # Создание фильра по статусам
     def create_status_filters(self, statuses: set[str]):
+        """Создание фильра по статусам"""
         status_row = self.status_filters.content
         status_row.controls.clear()
         
@@ -139,6 +141,7 @@ class BotCatalog:
 
     # Переключение кнопок статуса
     def update_status_filter(self, status: Optional[str], clicked_button: ft.ElevatedButton):
+        """Переключение кнопок фильтра по статусу"""
         self.selected_status = status
         
         # Обновляем внешний вид кнопок
@@ -153,7 +156,6 @@ class BotCatalog:
         
         self.apply_filters()
 
-    
     def apply_filters(self):
         search_query = self.search_field.value.lower() if self.search_field.value else ""
         
@@ -166,7 +168,6 @@ class BotCatalog:
             (not self.selected_status or bot.status == self.selected_status)
         ]
         self.update_grid()
-        
         # Показываем количество найденных ботов
         total = len(self.filtered_bots)
         snack = ft.SnackBar(
