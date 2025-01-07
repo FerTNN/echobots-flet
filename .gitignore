@@ -1,7 +1,3 @@
-extras/main.json
-extras/main copy.json
-echobots1/
-extras/transformed_data.json
-webapp/main_old.json
-webapp/build
-echobots/pyproject.toml
+extras
+webapp
+echobotsweb
