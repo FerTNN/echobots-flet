@@ -1129,7 +1129,7 @@ class BotCatalog:
                     ft.Row([
                         ft.Text(f"{key}: {value}", selectable=True),
                         ft.IconButton(
-                            ft.Icons.COPY,
+                            ft.icons.COPY,
                             on_click=lambda e, v=value: self.copy_to_clipboard(v)
                         )
                     ])
