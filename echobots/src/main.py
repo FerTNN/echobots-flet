@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
 
+port = 8080
+
 @dataclass
 class Bot:
     name: str
