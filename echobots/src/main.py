@@ -4,8 +4,6 @@ import os
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
 
-port = 8080
-
 @dataclass
 class Bot:
     name: str
@@ -78,7 +76,7 @@ class BotCatalog:
                 wrap=True,
                 scroll=ft.ScrollMode.AUTO
             ),
-            height=30,  # Установите фиксированную высоту
+            height=35,  # Установите фиксированную высоту
             margin=ft.margin.only(top=10, bottom=10)
         )
 
