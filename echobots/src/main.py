@@ -184,7 +184,7 @@ class BotCatalog:
     # Загрузка данных
     def load_data(self):
         try:
-            file_path = os.path.join(os.path.dirname(__file__), r'assets/main.json')
+            file_path = os.path.join(os.path.dirname(__file__), r'assets\main.json')
             print(f"Загрузка данных из файла: {file_path}")
             
             with open(file_path, 'r', encoding='utf-8') as file:
@@ -372,7 +372,7 @@ class BotCatalog:
                     )
             else:  # Если примечания — это просто строка
                 details.append(ft.Text(notes, selectable=True))
-                details.append(ft.Text('Картинки нет', selectable=True, color=ft.Colors.RED_400))
+                # details.append(ft.Text('Картинки нет', selectable=True, color=ft.Colors.RED_400))
         
         # ALertDialog для отображения
         dialog = ft.AlertDialog(
