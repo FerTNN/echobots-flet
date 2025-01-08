@@ -1253,4 +1253,4 @@ def main(page: ft.Page):
     BotCatalog(page)
 
 if __name__ == "__main__":
-    ft.app(target=main, view=ft.WEB_BROWSER)
+    ft.app(target=main, view=ft.WEB_BROWSER, port=int(os.getenv("PORT", 5000)))
