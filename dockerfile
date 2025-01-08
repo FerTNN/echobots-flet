@@ -1,12 +1,20 @@
-FROM python:3-alpine
+# Используем официальный образ Python
+FROM python:3.10-slim
 
-WORKDIR D:\vscode\echobots_flet\echobots\src\main.py
+# Устанавливаем рабочую директорию в контейнере
+WORKDIR /app
 
-COPY requirements.txt ./
+# Копируем зависимости в контейнер
+COPY requirements.txt /app/
+
+# Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Копируем приложение в контейнер
+COPY . /app/
 
-EXPOSE 8000
+# Указываем порт, который будет использовать приложение
+EXPOSE 8080
 
+# Команда запуска приложения
 CMD ["python", "main.py"]
