@@ -373,7 +373,7 @@ DATA = [
     {
         "Бот": {
             "text": "🏳️‍🌈Gayecho [MAIN]",
-            "link": "https://drive.google.com/u/0/drive-viewer/AKGpihZVHW0vD8dY15X9NTumV324WuKEiGK3Ca9FqXdQcVe7J_C0Ls0OOvXdW4m1fR-E41lK06HvWdcB8qg7pMTExtMzJ4qXgbCtGmA=s1600-rw-v1",
+            "link": "https://drive.google.com/u/0/drive-viewer/AKGpihanKpaTdqOKtAfwTgjJGd6U_TaKhXGNqE92u6oqmIpkqb1aHtb9L6O5lxWlOKPhlhEot1F_w3lRH_G53QOEapeuc8oXHokcvlY=s1600-rw-v1",
             "image_path": " webapp\\images\\image_17_1Z-bnEkU-euPvcDeVfrqTwNziTO-07Vd2.jpg"
         },
         "Нынешний юз": "@gayechobot",
