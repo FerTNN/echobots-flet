@@ -928,10 +928,10 @@ class BotCatalog:
             content=ft.Row(
                 controls=[],
                 spacing=10,
-                wrap=True,
-                scroll=ft.ScrollMode.AUTO
+                scroll=ft.ScrollMode.AUTO,
+                # auto_scroll=True
             ),
-            height=35,  # Установите фиксированную высоту
+            height=50,
             margin=ft.margin.only(top=10, bottom=10)
         )
 
