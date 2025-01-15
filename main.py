@@ -247,7 +247,7 @@ DATA = [
     {
         "Бот": {
             "text": "Dragon Echo All (hydra)",
-            "link": "https://drive.google.com/u/0/drive-viewer/AKGpihZ-dedBUreu45eBVZSJ4vKr6VHIiIH7nLwA697hG-E6i7PkIORTlzUwyWe186f1bbkxZLt42mWQ9mmLXBUZZl8jV5ooVOLqxA=s1600-rw-v1",
+            "link": "https://drive.google.com/u/0/drive-viewer/AKGpihZeVYzNQDHr4k8Al1A-p9SH4e3DzYpuP5kxjmjCWtULk08mM8cyKbBjA_MO3wOy0ddi0oYYXltSzG9sx4xpfpxmeLdqIiQNFdg=s1600-rw-v1",
             "image_path": " webapp\\images\\image_11_15ESOHTVMN-ZPWP1s2kAsexyHGHIYvq4K.jpg"
         },
         "Нынешний юз": "@hydraechoall_bot",
@@ -256,7 +256,7 @@ DATA = [
         "Старый юз": "",
         "Кд": "3 секунды",
         "Примечания": "\"гидра закрылась из-за проблем, о которых я не могу поведать, было решение сделать ребрендинг и продолжить работу, но эхо не получил такого обновления, потому что я не верил в его жизнь\" – Кугона",
-        "Дата смерти": "4 сентябр 2024",
+        "Дата смерти": "4 сентября 2024",
         "Владелец": "",
         "Функционал (команды)": "Пустая ячейка",
         "Кол-во юзеров": "Пустая ячейка",
@@ -382,7 +382,7 @@ DATA = [
         "Старый юз": "-",
         "Кд": "3 секунды",
         "Примечания": "\"Ещё, гей эхо не будет. Вместо него альт. версия Зоряны\" – Blessed!! [4 декабря 2024]",
-        "Дата смерти": "13 августа 2024, 13 ноября 2024",
+        "Дата смерти": "13 ноября 2024",
         "Владелец": "Blessed!! id6440397991",
         "Функционал (команды)": "Пустая ячейка",
         "Кол-во юзеров": "Пустая ячейка",
